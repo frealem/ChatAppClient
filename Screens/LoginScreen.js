@@ -1,4 +1,4 @@
-import { Image, StyleSheet, Text, View,KeyboardAvoidingView } from 'react-native'
+import { Image, StyleSheet, Text, View,KeyboardAvoidingView, ImageBackground } from 'react-native'
 import React, { useContext, useEffect, useState } from 'react'
 import tw from "twrnc";
 import { TextInput } from 'react-native';
@@ -8,11 +8,18 @@ import { signIn } from '../hooks/signalr';
 import { HubConnectionBuilder, LogLevel } from '@aspnet/signalr';
 import { Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Loader from '../components/loader'
+import { BlurView } from 'expo-blur';
+import Logo from '../components/logo';
+import { AntDesign } from '@expo/vector-icons';
+
+// import { BlurView } from '@react-native-community/blur';
 
 
 const LoginScreen = () => {
     const[email,setemail]=useState(null);
     const[password,setPassword]=useState(null);
+    const[isLoading,setIsLoading]=useState(false);
     
     const navigator=useNavigation();
     const incomplete=!email||!password;
@@ -20,6 +27,7 @@ const LoginScreen = () => {
 
     const handleSignIn= async () => {
       try {
+        setIsLoading(true)
         const data = await signIn(email, password);
         if(data === null) {
           Alert.alert('Couldnt sign in ','incorrect password or email');
@@ -32,6 +40,7 @@ const LoginScreen = () => {
         // localStorage.setItem('token', data.token);
         // localStorage.setItem('userId', data.userId);
         console.log("successfully logged in");
+        setIsLoading(false);
         navigator.navigate('Home')
         // code to store token and navigate to next screen
       } catch (err) {
@@ -40,48 +49,97 @@ const LoginScreen = () => {
       }
     }
    
-  return (
-    <KeyboardAvoidingView style={tw`flex-1 items-center pt-8 bg-gray-500`}>
-      <Image
-      style={tw`h-20 w-full`}
-        resizeMode="contain"
-        source={{uri:"https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg?w=900&t=st=1702005508~exp=1702006108~hmac=b438a7daeb87e21917d5c038b402c1166bbf2c38cb7b5a020e73f683e76f4f7b"}}
-      />
-      <Text style={tw`text-xl text-white`}>SIGN IN</Text>
-    
-   <View style={tw`w-70 text-center text-xl pt-8`}>
-   <TextInput
-        style={tw`text-center text-xl pb-2 mb-6 text-gray-500 rounded-md bg-white`}
-        placeholder="Enter your email"
-        value={email}
-        onChangeText={text=>setemail(text)}
-    />
-     
+  return (<>
+   <ImageBackground
+            source={require('../assets/chatgirl.jpg')}
+            style={styles.backgroundImage}
+        >
+            <BlurView
+                intensity={50}
+                style={styles.blurView}
+            >
+              <KeyboardAvoidingView style={tw`flex-1 items-center pt-8`}>
+    <Logo/>
+    <View style={tw`items-center text-xl pt-18`}>
+  <View style={styles.inputContainer}>
+  <AntDesign name="mail" size={24} color="white" style={styles.icon}/>
     <TextInput
-        style={tw`text-center text-xl pb-2 mb-6 text-gray-500 rounded-md bg-white`}
-        placeholder="Enter your password"
-        value={password}
-        onChangeText={text=>setPassword(text)}
-        secureTextEntry
+      style={styles.input}
+      placeholder="Enter your email"
+      value={email}
+      onChangeText={text => setemail(text)}
+      placeholderTextColor="white"
+      underlineColorAndroid="transparent"
+      placeholderStyle={styles.placeholder}
     />
-    
-   </View>
+  </View>
+
+  <View style={styles.inputContainer}>
+    <AntDesign name="lock" size={24} color="white" style={styles.icon} />
+    <TextInput
+      style={styles.input}
+      placeholder="Enter your password"
+      value={password}
+      onChangeText={text => setPassword(text)}
+   //   secureTextEntry
+      placeholderTextColor="white"
+      underlineColorAndroid="transparent"
+      placeholderStyle={styles.placeholder}
+    />
+  </View>
+</View>
    <TouchableOpacity
    onPress={handleSignIn}
-   style={[tw` w-70 h-9 mb-6  rounded-md bg-white mt-70 `,
+   style={[tw` w-70 h-14 mb-6 text-center rounded-xl bg-transparent border border-white border-2 mt-20 `,
    ]}
    disabled={incomplete}
    
-   ><Text  style={[tw`text-center text-xl  text-gray-500 font-bold`,
-   incomplete ? tw `text-gray-400`:tw `text-gray-500`]}
+   ><Text  style={[tw`text-center text-xl  mt-3 text-white font-bold`,
+   incomplete ? tw `text-white text-center`:tw `text-cyan-500 text-center`]}
    >SIGN IN</Text></TouchableOpacity>
 
    <TouchableOpacity
-   onPress={()=>{navigator.navigate('Register')}}><Text  style={tw`flex text-xl  text-white`}>I don't have an account yet,Sign Up.</Text></TouchableOpacity>
-    </KeyboardAvoidingView>
+   onPress={()=>{navigator.navigate('Register')}}><Text  style={{color:"#fff" ,fontSize:20}}>
+   I don't have an account,<Text style={{fontSize:20}}>sign up.</Text></Text>
+   </TouchableOpacity>
+   </KeyboardAvoidingView>
+   </BlurView>
+   </ImageBackground>
+    
+    {isLoading ? <Loader/>:null}</>
   )
 }
 
 export default LoginScreen
 
-const styles = StyleSheet.create({})
+const styles = StyleSheet.create({
+  backgroundImage: {
+    flex: 1,
+    resizeMode: 'cover',
+    justifyContent: 'center',
+},
+blurView: {
+    flex: 1,
+},
+inputContainer: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  borderWidth:0,
+  borderBottomWidth: 2,
+  borderBottomColor: 'white',
+  marginBottom: 30,
+},
+icon: {
+  marginRight:-25,
+  backgroundColor:"transparent"
+},
+input: {
+  flex: 1,
+  height: 60,
+  justifyContent:'center',
+  color: 'black',
+  width:280,
+  paddingLeft:30,
+  backgroundColor:"transparent"
+},
+})
